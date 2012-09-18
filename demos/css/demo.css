@@ -1,0 +1,17 @@
+body{
+	font: 26px/1.5 "Crimson Text", sans-serif;
+}
+
+p{
+	width:800px;
+	margin: 25px auto;
+}
+
+.debug-panel{
+	width:200px;
+	position: fixed;
+	top: 0;
+	left: 0;
+	background: red;
+	border: 2px solid black;
+}
