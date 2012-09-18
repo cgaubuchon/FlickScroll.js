@@ -34,19 +34,20 @@ FS.FlickScroll = (function(win, doc, $) {
 	
 	function handleTouchStart(event){
 		//Store first touch event data
-		_eventStorage.touchStartPositionX = event.pageX;
-		_eventStorage.touchStartPositionY = event.pageY;
+		_eventStorage.touchStartPositionX = event.touches[0].pageX;
+		_eventStorage.touchStartPositionY = event.touches[0].pageY;
 		_eventStorage.touchStartTime = Date.now();
+	}
 
-		var $debugPanel = $('html').find('.debug-panel');
-		$debugPanel.find('.direction').html("Event Type: " + event);
+	function handleTouchMove(event){
+		_eventStorage.touchEndPositionX = event.touches[0].pageX;
+		_eventStorage.touchEndPositionY = event.touches[0].pageY;
+		_eventStorage.touchEndTime = Date.now();
 	}
 
 	function handleTouchEnd(event){
 		//Set flick event end parameters
-		_eventStorage.touchEndPositionX = event.pageX;
-		_eventStorage.touchEndPositionY = event.pageY;
-		_eventStorage.touchEndTime = Date.now();
+		alert('touch end');
 
 		//Calculate differences to detect direction and speed of flick event to test against settings.
 		var flickOptions = {
@@ -105,8 +106,9 @@ FS.FlickScroll = (function(win, doc, $) {
 
 	function attachEvents(){
 		FS.FlickScroll.options.$flickElement.on({
-			"mousedown.flickScroll": handleTouchStart,
-			"mouseup.flickScroll": handleTouchEnd
+			"touchstart": handleTouchStart,
+			"touchend": handleTouchEnd,
+			"touchmove": handleTouchMove
 		});
 		
 	}
