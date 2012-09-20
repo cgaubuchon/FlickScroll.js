@@ -44,7 +44,7 @@ FS.FlickScroll = (function(win, doc, $) {
 	}
 
 	function handleTouchMove(event){
-		event.preventDefault();
+		//event.preventDefault();
 
 		_eventStorage.touchEndPositionX = event.touches[0].pageX;
 		_eventStorage.touchEndPositionY = event.touches[0].pageY;
@@ -60,26 +60,26 @@ FS.FlickScroll = (function(win, doc, $) {
 		};
 
 		//Determine direction of flick x (left or right)
-		// if(flickOptions.xDifference === 0 && FS.FlickScroll.options.$allowTapScroll === true){
-		// 	_eventStorage.eventDirectionX = 'none';
-		// }else{
-		// 	if(flickOptions.xDifference > 0){
-		// 		_eventStorage.eventDirectionX = 'left';
-		// 	}else{
-		// 		_eventStorage.eventDirectionX = 'right';
-		// 	}
-		// }
+		if(flickOptions.xDifference === 0 && FS.FlickScroll.options.$allowTapScroll === true){
+			_eventStorage.eventDirectionX = 'none';
+		}else{
+			if(flickOptions.xDifference > 0){
+				_eventStorage.eventDirectionX = 'left';
+			}else{
+				_eventStorage.eventDirectionX = 'right';
+			}
+		}
 
 		// //Determine direction of flick y (up or down)
-		// if(flickOptions.yDifference === 0 && FS.FlickScroll.options.$allowTapScroll === true){
-		// 	_eventStorage.eventDirectionY = 'none';
-		// }else{
-		// 	if(flickOptions.yDifference > 0){
-		// 		_eventStorage.eventDirectionY = 'up';
-		// 	}else{
-		// 		_eventStorage.eventDirectionY = 'down';
-		// 	}
-		// }
+		if(flickOptions.yDifference === 0 && FS.FlickScroll.options.$allowTapScroll === true){
+			_eventStorage.eventDirectionY = 'none';
+		}else{
+			if(flickOptions.yDifference > 0){
+				_eventStorage.eventDirectionY = 'up';
+			}else{
+				_eventStorage.eventDirectionY = 'down';
+			}
+		}
 
 		//Check for time difference vs. set max time to define a flick vs. scroll
 			//Check for distance flicked vs. set distance threshold to define flick vs. scroll
@@ -98,7 +98,7 @@ FS.FlickScroll = (function(win, doc, $) {
 
 			$debugPanel.find('.count').html("Count: " + _moveCount);
 			
-			//$debugPanel.find('.direction').html("Directions: " + _eventStorage.eventDirectionY + " " + _eventStorage.eventDirectionX);
+			$debugPanel.find('.direction').html("Directions: " + _eventStorage.eventDirectionY + " " + _eventStorage.eventDirectionX);
 		}
 	}
 
