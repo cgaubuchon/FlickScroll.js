@@ -12,7 +12,8 @@ FS.FlickScroll = (function(win, doc, $) {
 			scrollSpeed: 50,
 			allowTapScroll: false, //allow scroll to positon on touch as well as a flick
 			axis: 'vertical', //Direction of scroll intent (horizontal, vertical, all) TODO: implement 'all'
-			debug: true 
+			scrollOffset: 30, //Offset from touched point
+			debug: true
 		},
 		_scrollSpot = {
 			'x': 0,
@@ -145,6 +146,26 @@ FS.FlickScroll = (function(win, doc, $) {
 	function attachEvents(){
 		document.body.addEventListener('touchstart', handleTouchStart, false);
 		document.body.addEventListener('touchmove', handleTouchMove, false);
+
+
+		document.body.addEventListener('click', handleClick, false);
+	}
+
+	function handleClick(event){
+		event.preventDefault();
+
+		scrolling = true;
+
+		_eventStorage.touchStartPositionX = event.pageX;
+		_eventStorage.touchStartPositionY = event.pageY;
+		_eventStorage.eventDirectionY = 'up';
+
+		$('body').append('<div style="position: absolute; background: red; height:6px; width: 6px; top: '+(_eventStorage.touchStartPositionY-3)+'px; left: '+(_eventStorage.touchStartPositionX-3)+'px;"></div>');
+
+		animateScroll();
+
+		console.log('clicked');
+
 	}
 
 	function animateScroll(){
@@ -160,19 +181,27 @@ FS.FlickScroll = (function(win, doc, $) {
 		var currentPositionY = window.scrollY,
 			currentPositionX = window.scrollX;
 
-		console.log('scrolling', _eventStorage.touchStartPositionY, currentPositionY);
+		console.log('scrolling', _eventStorage.touchStartPositionY, currentPositionY, document.height, window.innerHeight);
 
-		if(_eventStorage.eventDirectionY == 'up' && currentPositionY <= _eventStorage.touchStartPositionY){
+		//Check if at top of page or bottom of page
+		if(currentPositionY < (document.height-window.innerHeight)){
+			if(_eventStorage.eventDirectionY == 'up' && currentPositionY <= (_eventStorage.touchStartPositionY - FS.FlickScroll.options.scrollOffset)){
 			scrolling = true;
 			window.scrollTo(currentPositionX, currentPositionY+(1*FS.FlickScroll.options.scrollSpeed));
 
-		}else if(_eventStorage.eventDirectionY == 'down' && currentPositionY >= _eventStorage.touchStartPositionY){
-			scrolling = true;
-			window.scrollTo(currentPositionX, currentPositionY-(1*FS.FlickScroll.options.scrollSpeed));
+			}else if(_eventStorage.eventDirectionY == 'down' && currentPositionY >= (_eventStorage.touchStartPositionY + FS.FlickScroll.options.scrollOffset)){
+				scrolling = true;
+				window.scrollTo(currentPositionX, currentPositionY-(1*FS.FlickScroll.options.scrollSpeed));
+
+			}else{
+				scrolling = false;
+			}
 
 		}else{
 			scrolling = false;
 		}
+		
+		
 
 	}
 
