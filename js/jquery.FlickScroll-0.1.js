@@ -9,6 +9,7 @@ FS.FlickScroll = (function(win, doc, $) {
 		_defaults = {
 			flickDistanceThreshold: 200, //in pixels
 			flickTimeMax: 1000, //in milliseconds
+			scrollSpeed: 50,
 			allowTapScroll: false, //allow scroll to positon on touch as well as a flick
 			axis: 'vertical', //Direction of scroll intent (horizontal, vertical, all) TODO: implement 'all'
 			debug: true 
@@ -24,10 +25,13 @@ FS.FlickScroll = (function(win, doc, $) {
 			'touchEndPositionX': 0,
 			'touchEndPositionY': 0,
 			'touchEndTime': 0,
-			'eventDirectionX': '',
-			'eventDirectionY': ''
+			'eventDirectionX': 'left',
+			'eventDirectionY': 'up'
 		},
 		debugPanel = '',
+		scrolling = false,
+		requestAnimation = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame,
+		cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame,
 		_flickOptions = {};
 
 	var FlickScroll = function(options){
@@ -54,6 +58,28 @@ FS.FlickScroll = (function(win, doc, $) {
 
 	function handleTouchEnd(event){
 		debugPanel.find('.event').html('touchend');
+
+		//Determine direction of flick x (left or right)
+		if(_flickOptions.xDifference === 0 && FS.FlickScroll.options.$allowTapScroll === true){
+			_eventStorage.eventDirectionX = 'none';
+		}else{
+			if(_flickOptions.xDifference > 0){
+				_eventStorage.eventDirectionX = 'left';
+			}else{
+				_eventStorage.eventDirectionX = 'right';
+			}
+		}
+
+		// //Determine direction of flick y (up or down)
+		if(_flickOptions.yDifference === 0 && FS.FlickScroll.options.$allowTapScroll === true){
+			_eventStorage.eventDirectionY = 'none';
+		}else{
+			if(_flickOptions.yDifference > 0){
+				_eventStorage.eventDirectionY = 'up';
+			}else{
+				_eventStorage.eventDirectionY = 'down';
+			}
+		}
 
 		//Check for time difference vs. set max time to define a flick vs. scroll
 			//Check for distance flicked vs. set distance threshold to define flick vs. scroll
@@ -105,8 +131,9 @@ FS.FlickScroll = (function(win, doc, $) {
 	}
 
 	function triggerFlick(){
-		updateScrollPosition(_scrollSpot.x, _scrollSpot.y);
-		debugPanel.find('.success').html("Successful Flick! "+_scrollSpot.x+', '+_scrollSpot.y);
+		scrolling = true;
+		animateScroll();
+		debugPanel.find('.success').html("Successful Flick! "+_scrollSpot.x+', '+_scrollSpot.y+' direction: '+_eventStorage.eventDirectionY);
 		$('html').append('<div style="position:absolute;top:'+_scrollSpot.y+'px;left:'+_scrollSpot.x+'px;height:1px;width:1px;background:red;"></div>');
 	}
 
@@ -114,32 +141,48 @@ FS.FlickScroll = (function(win, doc, $) {
 	//PRIVATE METHODS
 	//--------------------------------------------------
 
+
 	function attachEvents(){
 		document.body.addEventListener('touchstart', handleTouchStart, false);
 		document.body.addEventListener('touchmove', handleTouchMove, false);
 	}
 
-	function updateScrollPosition(positionToX, positionToY){
+	function animateScroll(){
+		if(scrolling === true){
+			window.requestAnimationFrame(animateScroll);
+			scrollToPosition();
+		}else{
+			window.cancelAnimationFrame(animateScroll);
+		}
+	}
 
+	function scrollToPosition(){
 		var currentPositionY = window.scrollY,
 			currentPositionX = window.scrollX;
-		
-		if(currentPositionY < positionToY){
-			window.scrollTo(currentPositionX,currentPositionY+1);
+
+		console.log('scrolling', _eventStorage.touchStartPositionY, currentPositionY);
+
+		if(_eventStorage.eventDirectionY == 'up' && currentPositionY <= _eventStorage.touchStartPositionY){
+			scrolling = true;
+			window.scrollTo(currentPositionX, currentPositionY+(1*FS.FlickScroll.options.scrollSpeed));
+
+		}else if(_eventStorage.eventDirectionY == 'down' && currentPositionY >= _eventStorage.touchStartPositionY){
+			scrolling = true;
+			window.scrollTo(currentPositionX, currentPositionY-(1*FS.FlickScroll.options.scrollSpeed));
+
 		}else{
-			window.scrollTo(currentPositionX,currentPositionY-1);
+			scrolling = false;
 		}
 
-		if(currentPositionY != positionToY || currentPositionX != positionToX){
-			requestAnimationFrame(updateScrollPosition(positionToX, positionToY));
-		}else{
-			return;
-		}
-
-		
-
-		
 	}
+
+	FlickScroll.prototype.updateScrollPosition = function(positionToX, positionToY, flickDirection){
+		scrolling = true;
+		_eventStorage.touchStartPositionX = positionToX;
+		_eventStorage.touchStartPositionY = positionToY;
+		_eventStorage.eventDirectionY = flickDirection;
+		animateScroll();
+	};
 
 	//--------------------------------------------------
 	//PUBLIC HANDLERS
@@ -167,4 +210,32 @@ FS.FlickScroll = (function(win, doc, $) {
 
 }(window, document, jQuery));
 
+//
+// Polyfill for request and cancel animationFrame
+// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+//
+(function() {
+	var lastTime = 0;
+	var vendors = ['ms', 'moz', 'webkit', 'o'];
+	for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+		window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+		window.cancelRequestAnimationFrame = window[vendors[x]+'CancelRequestAnimationFrame'];
+	}
+	if (!window.requestAnimationFrame)
+		window.requestAnimationFrame = function(callback, element) {
+			var currTime = new Date().getTime();
+			var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+			var id = window.setTimeout(function() { callback(currTime + timeToCall);},
+			timeToCall);
+			lastTime = currTime + timeToCall;
+			return id;
+	};
+	if (!window.cancelAnimationFrame)
+		window.cancelAnimationFrame = function(id) {
+			clearTimeout(id);
+		};
+}());
+
+//Init
 FS.FlickScroll.init();
+
